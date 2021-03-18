@@ -68,7 +68,7 @@ func (ctx *Context) List() {
 		for _, mount := range mountedAliases {
 			if mount.Filesystem == "fuse.fuse-overlayfs" {
 				var match string
-				n, _ := fmt.Sscanf(mount.Path, "/home/mhamza.aliases/%s", &match)
+				n, _ := fmt.Sscanf(mount.Path, fmt.Sprintf("%s/%%s", ctx.AliasesDir), &match)
 				if n == 1 {
 					alias := strings.Split(match, "/")[0]
 					fmt.Println(alias)
