@@ -1,4 +1,4 @@
-module github.com/thethumbler/ualias
+module github.com/thethumbler/uprofile
 
 go 1.15
 

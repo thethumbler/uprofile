@@ -13,8 +13,8 @@ import (
 )
 
 type Context struct {
-	User       string
-	AliasesDir string
+	User        string
+	ProfilesDir string
 }
 
 func (ctx *Context) Create() {
@@ -26,12 +26,12 @@ func (ctx *Context) Create() {
 		return
 	}
 
-	alias := createCommand.Arg(0)
+	profile := createCommand.Arg(0)
 
 	dirsList := []string{
-		fmt.Sprintf("%s/%s/upperdir", ctx.AliasesDir, alias),
-		fmt.Sprintf("%s/%s/workdir", ctx.AliasesDir, alias),
-		fmt.Sprintf("%s/%s/merged", ctx.AliasesDir, alias),
+		fmt.Sprintf("%s/%s/upperdir", ctx.ProfilesDir, profile),
+		fmt.Sprintf("%s/%s/workdir", ctx.ProfilesDir, profile),
+		fmt.Sprintf("%s/%s/merged", ctx.ProfilesDir, profile),
 	}
 
 	for _, path := range dirsList {
@@ -48,30 +48,30 @@ func (ctx *Context) Delete() {
 		return
 	}
 
-	alias := deleteCommand.Arg(0)
-	aliasDir := fmt.Sprintf("%s/%s", ctx.AliasesDir, alias)
-	os.RemoveAll(aliasDir)
+	profile := deleteCommand.Arg(0)
+	profileDir := fmt.Sprintf("%s/%s", ctx.ProfilesDir, profile)
+	os.RemoveAll(profileDir)
 }
 
 func (ctx *Context) List() {
 	listCommand := flag.NewFlagSet("list", flag.ExitOnError)
-	listAll := listCommand.Bool("a", false, "list all aliases (including not mounted)")
+	listAll := listCommand.Bool("a", false, "list all porfiles (including not mounted)")
 	listCommand.Parse(os.Args[2:])
 
 	if *listAll {
-		aliasesList, _ := ioutil.ReadDir(ctx.AliasesDir)
-		for _, entry := range aliasesList {
+		profilesList, _ := ioutil.ReadDir(ctx.ProfilesDir)
+		for _, entry := range profilesList {
 			fmt.Println(entry.Name())
 		}
 	} else {
-		mountedAliases, _ := mount.Mounts()
-		for _, mount := range mountedAliases {
+		mountedProfiles, _ := mount.Mounts()
+		for _, mount := range mountedProfiles {
 			if mount.Filesystem == "fuse.fuse-overlayfs" {
 				var match string
-				n, _ := fmt.Sscanf(mount.Path, fmt.Sprintf("%s/%%s", ctx.AliasesDir), &match)
+				n, _ := fmt.Sscanf(mount.Path, fmt.Sprintf("%s/%%s", ctx.ProfilesDir), &match)
 				if n == 1 {
-					alias := strings.Split(match, "/")[0]
-					fmt.Println(alias)
+					profile := strings.Split(match, "/")[0]
+					fmt.Println(profile)
 				}
 			}
 		}
@@ -82,12 +82,12 @@ func (ctx *Context) Mount() {
 	mountCommand := flag.NewFlagSet("mount", flag.ExitOnError)
 	mountCommand.Parse(os.Args[2:])
 
-	alias := mountCommand.Arg(0)
+	profile := mountCommand.Arg(0)
 
 	lowerDir := fmt.Sprintf("/home/%s", ctx.User)
-	upperDir := fmt.Sprintf("%s/%s/upperdir", ctx.AliasesDir, alias)
-	workDir := fmt.Sprintf("%s/%s/workdir", ctx.AliasesDir, alias)
-	mergedDir := fmt.Sprintf("%s/%s/merged", ctx.AliasesDir, alias)
+	upperDir := fmt.Sprintf("%s/%s/upperdir", ctx.ProfilesDir, profile)
+	workDir := fmt.Sprintf("%s/%s/workdir", ctx.ProfilesDir, profile)
+	mergedDir := fmt.Sprintf("%s/%s/merged", ctx.ProfilesDir, profile)
 
 	mountOptions := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", lowerDir, upperDir, workDir)
 
@@ -98,8 +98,8 @@ func (ctx *Context) Umount() {
 	umountCommand := flag.NewFlagSet("umount", flag.ExitOnError)
 	umountCommand.Parse(os.Args[2:])
 
-	alias := umountCommand.Arg(0)
-	mountpoint := fmt.Sprintf("%s/%s/merged", ctx.AliasesDir, alias)
+	profile := umountCommand.Arg(0)
+	mountpoint := fmt.Sprintf("%s/%s/merged", ctx.ProfilesDir, profile)
 	exec.Command("umount", mountpoint).Run()
 }
 
@@ -107,26 +107,26 @@ func (ctx *Context) Jump() {
 	jumpCommand := flag.NewFlagSet("jump", flag.ExitOnError)
 	jumpCommand.Parse(os.Args[2:])
 
-	alias := jumpCommand.Arg(0)
-	aliasDir := fmt.Sprintf("%s/%s", ctx.AliasesDir, alias)
-	homeDir := fmt.Sprintf("%s/merged", aliasDir)
+	profile := jumpCommand.Arg(0)
+	profileDir := fmt.Sprintf("%s/%s", ctx.ProfilesDir, profile)
+	homeDir := fmt.Sprintf("%s/merged", profileDir)
 
-	if info, err := os.Stat(aliasDir); err != nil {
+	if info, err := os.Stat(profileDir); err != nil {
 		if err.Error() == "no such file or directory" {
-			fmt.Fprintf(os.Stderr, "no such alias: %s\n", alias)
+			fmt.Fprintf(os.Stderr, "no such profile: %s\n", profile)
 		} else {
-			fmt.Fprintf(os.Stderr, "unable to access alias '%s', '%s': %s\n", alias, aliasDir, err.Error())
+			fmt.Fprintf(os.Stderr, "unable to access profile '%s', '%s': %s\n", profile, profileDir, err.Error())
 		}
 
 		os.Exit(1)
 	} else if !info.IsDir() {
-		fmt.Fprintf(os.Stderr, "alias '%s' is not created correctly, '%s' is not a directory.\n", alias, aliasDir)
+		fmt.Fprintf(os.Stderr, "profile '%s' is not created correctly, '%s' is not a directory.\n", profile, profileDir)
 		os.Exit(1)
 	}
 
 	env := append(os.Environ(),
 		fmt.Sprintf("HOME=%s", homeDir),
-		fmt.Sprintf("PS1=[%s/\\u@\\h \\W]\\$ ", alias),
+		fmt.Sprintf("PS1=[%s/\\u@\\h \\W]\\$ ", profile),
 	)
 
 	binaryPath := "/usr/bin/unshare"
@@ -137,14 +137,14 @@ func (ctx *Context) Jump() {
 }
 
 func usage() {
-	fmt.Println("Usage: ualias <COMMAND> [FLAGS] [ARGS]")
+	fmt.Println("Usage: uprofile <COMMAND> [FLAGS] [ARGS]")
 	fmt.Println("\nCOMMAND:")
-	fmt.Println("  create      create a new alias")
-	fmt.Println("  delete      delete an existing alias")
-	fmt.Println("  list        list aliases")
-	fmt.Println("  mount       mount alias")
-	fmt.Println("  umount      unmount a mounted alias")
-	fmt.Println("  jump        jump to alias context")
+	fmt.Println("  create      create a new profile")
+	fmt.Println("  delete      delete an existing profile")
+	fmt.Println("  list        list profiles")
+	fmt.Println("  mount       mount profile")
+	fmt.Println("  umount      unmount a mounted profile")
+	fmt.Println("  jump        jump to profile context")
 }
 
 func main() {
@@ -156,12 +156,12 @@ func main() {
 	}
 
 	context := Context{
-		User:       user,
-		AliasesDir: fmt.Sprintf("/home/%s.aliases", user),
+		User:        user,
+		ProfilesDir: fmt.Sprintf("/home/%s.profiles", user),
 	}
 
-	if info, err := os.Stat(context.AliasesDir); err != nil || !info.IsDir() {
-		fmt.Fprintf(os.Stderr, "Unable to access '%s', is context initialized?\n", context.AliasesDir)
+	if info, err := os.Stat(context.ProfilesDir); err != nil || !info.IsDir() {
+		fmt.Fprintf(os.Stderr, "Unable to access '%s', is context initialized?\n", context.ProfilesDir)
 		os.Exit(1)
 	}
 

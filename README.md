@@ -1,4 +1,4 @@
-ualias: manage multiple profiles (aliases) for a single linux user
+uprofile: manage multiple profiles for a single linux user
 ===
 
 Problem
@@ -21,21 +21,21 @@ $ kubectl ...
 ### Use multiple users
 You can create a user for each context and use the default/global configuration files in each user home directory. This works well for completely isolated work. However I often want to share files between all users (like my VIM configuration), which is hard to maintain.
 
-### Use ualias
-ualias allows you to have multiple identites on the same user, all identites have their own home directories that is layered on top of the user home directory, so all files that don't need to be edited are shared.
+### Use uprofile
+uprofile allows you to have multiple identites on the same user, all identites have their own home directories that is layered on top of the user home directory, so all files that don't need to be edited are shared.
 
 ```
-$ ualias create context1
-$ ualias mount context1
-$ ualias jump context1
+$ uprofile create context1
+$ uprofile mount context1
+$ uprofile jump context1
 (context1) $ git config --global user.email example@example.com # doesn't override original user global config
 ```
 
 Principle
 ---
-ualias uses `fuse-overlayfs` to mount identity home directory (similar to docker but without full isolation) and overrides `HOME` environment variable. Any writes in the identity home directory are not committed to original user home directory, keeping them isolated.
+uprofile uses `fuse-overlayfs` to mount identity home directory (similar to docker but without full isolation) and overrides `HOME` environment variable. Any writes in the identity home directory are not committed to original user home directory, keeping them isolated.
 
-ualias also uses `unshare` to jump to the identity context. While not immediately necessary, using `unshare` allows us to add more complex features later on.
+uprofile also uses `unshare` to jump to the identity context. While not immediately necessary, using `unshare` allows us to add more complex features later on.
 
 
 Building
@@ -44,36 +44,36 @@ Make sure that `fuse-overlayfs` and `unshare` are installed.
 
 ```
 $ go build
-$ ./ualias ...
+$ ./uprofile ...
 ```
 
-It's prefered to move `ualias` binary to `~/.local/bin/` and have `~/.local/bin/` in your `PATH` environment variable.
+It's prefered to move `uprofile` binary to `~/.local/bin/` and have `~/.local/bin/` in your `PATH` environment variable.
 
 
 Usage
 ---
-We need a directory `/home/$USER.aliases` to host all identites that is accessable by `$USER`.
+We need a directory `/home/$USER.profiles` to host all identites that is accessable by `$USER`.
 
 ```
-$ sudo mkdir /home/$USER.aliases
-$ sudo chown $USER: /home/$USER.aliases
+$ sudo mkdir /home/$USER.profiles
+$ sudo chown $USER: /home/$USER.profiles
 ```
 
-Then we can use `ualias` to create, mount and jump to an alias
+Then we can use `uprofile` to create, mount and jump to a profile
 ```
-$ ualias create context1
-$ ualias mount context1
-$ ualias jump context1
+$ uprofile create context1
+$ uprofile mount context1
+$ uprofile jump context1
 (context1) $ ...
 ```
 
-an alias can be unmounted later with
+a profile can be unmounted later with
 ```
-$ ualias umount context1
+$ uprofile umount context1
 ```
 
-if the alias is no longer needed, we can delete it (this will delete all the modifications in alias home directory though, so make sure to backup anything you need before that)
+if the profile is no longer needed, we can delete it (this will delete all the modifications in profile home directory though, so make sure to backup anything you need before that)
 
 ```
-$ ualias delete context1 # context1 must be unmounted first
+$ uprofile delete context1 # context1 must be unmounted first
 ```
