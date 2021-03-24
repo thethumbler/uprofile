@@ -28,11 +28,24 @@ func Jump(context *Context, profile string) error {
 
 	env := append(os.Environ(),
 		fmt.Sprintf("HOME=%s", homeDir),
-		fmt.Sprintf("PS1=[\\u@%s \\W]\\$ ", profile),
+		fmt.Sprintf("UPROFILE=%s", profile),
 	)
 
-	binaryPath := "/usr/bin/unshare"
-	if err := syscall.Exec(binaryPath, []string{"unshare", "-w", homeDir}, env); err != nil {
+	if err := syscall.Unshare(0); err != nil {
+		return err
+	}
+
+	if err := syscall.Chdir(homeDir); err != nil {
+		return err
+	}
+
+	defaultShell := os.Getenv("SHELL")
+
+	if defaultShell == "" {
+		defaultShell = "/bin/sh"
+	}
+
+	if err := syscall.Exec(defaultShell, []string{defaultShell}, env); err != nil {
 		return err
 	}
 

@@ -12,7 +12,7 @@ var rootCommand = &cobra.Command{
 	Short: "Manage user profiles",
 	Long:  "Manage multiple profiles for a single user using overlay mounts for each profile",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Hello world")
+		cmd.Usage()
 	},
 }
 
@@ -22,6 +22,7 @@ func Execute() {
 	rootCommand.AddCommand(ListCommand)
 	rootCommand.AddCommand(MountCommand)
 	rootCommand.AddCommand(UmountCommand)
+	rootCommand.AddCommand(RemountCommand)
 	rootCommand.AddCommand(JumpCommand)
 
 	if err := rootCommand.Execute(); err != nil {
