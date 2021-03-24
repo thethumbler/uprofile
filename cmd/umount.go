@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-	"os/exec"
+	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/thethumbler/uprofile/internal"
@@ -16,7 +15,8 @@ var UmountCommand = &cobra.Command{
 		context := internal.GetContext()
 		profile := args[0]
 
-		mountpoint := fmt.Sprintf("%s/%s/merged", context.ProfilesDir, profile)
-		exec.Command("umount", mountpoint).Run()
+		if err := internal.UmountProfile(&context, profile); err != nil {
+			log.Fatal(err)
+		}
 	},
 }
