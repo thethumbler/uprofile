@@ -77,3 +77,7 @@ if the profile is no longer needed, we can delete it (this will delete all the m
 ```
 $ uprofile delete context1 # context1 must be unmounted first
 ```
+
+Advanced
+---
+I use monkey patching to overcome some of the applications that don't use/respect HOME env variable. For example, `OpenSSH` uses `getpwuid` to retrieve user home directory which we can't easily override. The source for monkey patching is located under `patch/` but I won't provide steps on how to use it to ensure that only users who really know what they are doing can use it :)

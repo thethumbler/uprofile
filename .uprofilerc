@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+
+if [[ ! -z "$UPROFILE" && ! "$PS1" =~ "($UPROFILE)" ]]; then
+    export PS1="($UPROFILE) $PS1"
+
+    # monkey patching, proceed with caution
+    if [[ -f "$HOME/.local/lib64/uprofile-patch.so" ]]; then
+        export LD_PRELOAD="$HOME/.local/lib64/uprofile-patch.so"
+    fi
+fi
