@@ -3,7 +3,7 @@ uprofile: manage multiple profiles for a single linux user
 
 Problem
 -----
-I work on mutliple contexts (mutliple projects, freelancing, etc). I need to manage multiple identites (mutliple SSH identites, k8s contexts, git config, etc) and I want to be able to jump between them quickly.
+I work on mutliple contexts (mutliple projects, freelancing, etc). I need to manage multiple profiles (mutliple SSH identites, k8s contexts, git config, etc) and I want to be able to jump between them quickly.
 
 Solutions
 ---
@@ -22,7 +22,7 @@ $ kubectl ...
 You can create a user for each context and use the default/global configuration files in each user home directory. This works well for completely isolated work. However I often want to share files between all users (like my VIM configuration), which is hard to maintain.
 
 ### Use uprofile
-uprofile allows you to have multiple identites on the same user, all identites have their own home directories that is layered on top of the user home directory, so all files that don't need to be edited are shared.
+uprofile allows you to have multiple profiles on the same user, all profiles have their own home directories that is layered on top of the user home directory, so all files that don't need to be edited are shared.
 
 ```
 $ uprofile create context1
@@ -33,9 +33,9 @@ $ uprofile jump context1
 
 Principle
 ---
-uprofile uses `fuse-overlayfs` to mount identity home directory (similar to docker but without full isolation) and overrides `HOME` environment variable. Any writes in the identity home directory are not committed to original user home directory, keeping them isolated.
+uprofile uses `fuse-overlayfs` to mount profile home directory (similar to docker but without full isolation) and overrides `HOME` environment variable. Any writes in the profile home directory are not committed to original user home directory, keeping them isolated.
 
-uprofile also uses `unshare` to jump to the identity context. While not immediately necessary, using `unshare` allows us to add more complex features later on.
+uprofile also uses `unshare` to jump to the profile context. While not immediately necessary, using `unshare` allows us to add more complex features later on.
 
 
 Building
@@ -52,7 +52,7 @@ It's prefered to move `uprofile` binary to `~/.local/bin/` and have `~/.local/bi
 
 Usage
 ---
-We need a directory `/home/$USER.profiles` to host all identites that is accessable by `$USER`.
+We need a directory `/home/$USER.profiles` to host all profiles that is accessable by `$USER`.
 
 ```
 $ sudo mkdir /home/$USER.profiles
